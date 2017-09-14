@@ -8,53 +8,47 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+import com.libertymutual.goforcode.invoice.services.InvoiceUserDetailService;
 
 
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 
+	
+	private InvoiceUserDetailService userDetailsService;
+	
+	public SecurityConfiguration(InvoiceUserDetailService userDetailsService) {
+		this.userDetailsService = userDetailsService;
+	}
+	
+		
 	@Override
 	protected void configure(HttpSecurity http) throws Exception{
 		http
 			.authorizeRequests()
-				.antMatchers("/", "/css/**", "/js/**").permitAll() 
+				.antMatchers("/", "/signup", "/css/**", "/js/**").permitAll() 
 				.antMatchers("/billing-records/**").hasAnyRole("ADMIN", "CLERK")
 				.antMatchers("/invoices/**").hasAnyRole("ADMIN", "ACCOUNTANT")
 				.antMatchers("/admin/**").hasRole("ADMIN")
 				.anyRequest().authenticated() 
 			.and()
 			.formLogin();			
-		    //.loginPage("/loginalot");		
 	}	
 		
 	
 	@Bean
-	public UserDetailsService userDetailsService() {
-		
-		InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-		UserDetails user = User
-				.withUsername("clerk")
-				.password("clerk")
-				.roles("CLERK")
-                .build();
-		manager.createUser(user);
-
-		user = User
-				.withUsername("admin")
-				.password("admin")
-				.roles("ADMIN")
-                .build();
-		manager.createUser(user);
-		
-		user = User
-				.withUsername("accountant")
-				.password("accountant")
-				.roles("ACCOUNTANT")
-                .build();
-		manager.createUser(user);
-	
-		return manager;
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 	
+	
+	
+	@Override
+	public UserDetailsService userDetailsService() {
+		return userDetailsService;
+	}	
 }
